@@ -1,0 +1,82 @@
+
+<h1>Resource Usage</h1>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <div id="chart_div"></div>
+  <div id="chart_div1"></div> Ram Usage
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+google.charts.load('current', {packages: ['corechart', 'line']});
+google.charts.load('current', {'packages':['gauge']});
+google.charts.setOnLoadCallback(drawCpuUsage);
+google.charts.setOnLoadCallback(drawChart);
+
+
+var chartLoaded=false;
+var histogram=[];
+var ramUsage;
+
+function drawCpuUsage() {
+    var data = new google.visualization.DataTable();
+      data.addColumn('number', 'X');
+      data.addColumn('number', 'CPU');
+
+      data.addRows(histogram);
+
+      var options = {
+        hAxis: {
+          title: 'Seconds'
+        },
+        vAxis: {
+          title: 'CPU Load %',
+          viewWindow:{
+              min:0,
+              max:100
+          }
+        },
+        backgroundColor: '#f1f8e9'
+      };
+      var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(data,options);
+
+    chartLoaded=true;
+    }
+
+  
+function drawChart() {
+
+var data = google.visualization.arrayToDataTable([
+  ['Label', 'Value'],
+  ['Memory', 80]
+]);
+
+var options = {
+  width: 400, height: 120,
+  redFrom: 90, redTo: 100,
+  yellowFrom:75, yellowTo: 90,
+  minorTicks: 5
+};
+
+var chart = new google.visualization.Gauge(document.getElementById('chart_div1'));
+
+data.setValue(0, 1,ramUsage);
+chart.draw(data, options);
+}
+
+var socket = io.connect('http://localhost:4200');
+  socket.on('cpu histogram', function (cpuHistogram) {
+    
+     for(var i=0;i<cpuHistogram.length;i++){
+       ramUsage=cpuHistogram[i][1];
+     }
+      console.log(ramUsage);
+      histogram=cpuHistogram;
+    
+
+      if(chartLoaded){
+        drawCpuUsage();
+      }
+      drawChart();
+  });
+</script>
